@@ -4,3 +4,7 @@ __pycache__/
 cache/
 data/authors/
 reports/*.csv
+
+authors.zip
+scholarix_scaffold.zip
+*.pdf
