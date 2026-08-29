@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Scholarix Trust Auditor</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    margin: 0;
+    background: #f5f6f8;
+    color: #1a1a1a;
+  }
+  header {
+    background: #1a2b4a;
+    color: white;
+    padding: 20px 40px;
+  }
+  header h1 { margin: 0; font-size: 22px; }
+  header p { margin: 4px 0 0; opacity: 0.8; font-size: 13px; }
+  .layout {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    height: calc(100vh - 76px);
+  }
+  .sidebar {
+    background: white;
+    border-right: 1px solid #e0e2e6;
+    overflow-y: auto;
+  }
+  .search {
+    padding: 12px;
+    border-bottom: 1px solid #e0e2e6;
+    position: sticky;
+    top: 0;
+    background: white;
+  }
+  .search input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+  }
+  .author-item {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f0f0f2;
+    cursor: pointer;
+  }
+  .author-item:hover { background: #f5f7fb; }
+  .author-item.active { background: #e8effc; border-left: 3px solid #2b5cd6; }
+  .author-item .name { font-weight: 600; font-size: 14px; }
+  .author-item .affil { font-size: 12px; color: #666; margin-top: 2px; }
+  main {
+    padding: 32px 40px;
+    overflow-y: auto;
+  }
+  .placeholder {
+    text-align: center;
+    color: #888;
+    margin-top: 100px;
+  }
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  .badge-ok { background: #d7f5db; color: #14532d; }
+  .badge-medium { background: #fef3c7; color: #7a4a0a; }
+  .badge-low { background: #fee2e2; color: #7a1414; }
+  .trust-banner {
+    padding: 16px 20px;
+    border-radius: 8px;
+    margin-bottom: 24px;
+  }
+  .trust-banner.ok { background: #d7f5db; border: 1px solid #86d896; }
+  .trust-banner.medium { background: #fef3c7; border: 1px solid #f3c968; }
+  .trust-banner.low { background: #fee2e2; border: 1px solid #f39898; }
+  .trust-banner h2 { margin: 0 0 8px; font-size: 18px; }
+  .trust-banner ul { margin: 8px 0 0; padding-left: 20px; font-size: 14px; }
+  .card {
+    background: white;
+    border: 1px solid #e0e2e6;
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin-bottom: 16px;
+  }
+  .card h3 {
+    margin: 0 0 12px;
+    font-size: 15px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #666;
+  }
+  .kv { display: grid; grid-template-columns: 200px 1fr; gap: 8px 16px; font-size: 14px; }
+  .kv dt { color: #666; }
+  .kv dd { margin: 0; }
+  .status {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: "SF Mono", Consolas, monospace;
+  }
+  .status-MATCH, .status-VERIFIED, .status-IDENTICAL { background: #d7f5db; color: #14532d; }
+  .status-CONFLICT, .status-DISAGREE { background: #fee2e2; color: #7a1414; }
+  .status-PARTIAL, .status-MINOR_GAP, .status-LARGE_GAP { background: #fef3c7; color: #7a4a0a; }
+  .status-NO_ORCID, .status-NEVER_CHECKED, .status-RATE_LIMITED, .status-ORCID_NO_EMPLOYMENT, .status-ORCID_NO_INST, .status-FETCH_ERROR, .status-NO_AFFILIATION, .status-URL_ONLY, .status-UNKNOWN {
+    background: #e5e7eb; color: #374151;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table th, table td {
+    text-align: left;
+    padding: 8px 10px;
+    border-bottom: 1px solid #f0f0f2;
+  }
+  table th { color: #666; font-weight: 600; font-size: 12px; text-transform: uppercase; }
+  .reason { font-size: 13px; color: #444; margin-top: 8px; font-style: italic; }
+  code { background: #f0f0f2; padding: 2px 6px; border-radius: 3px; font-size: 12px; }
+  .summary-strip {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .stat {
+    flex: 1;
+    background: white;
+    border: 1px solid #e0e2e6;
+    border-radius: 8px;
+    padding: 16px;
+    text-align: center;
+  }
+  .stat .num { font-size: 28px; font-weight: 700; color: #1a2b4a; }
+  .stat .label { font-size: 12px; color: #666; margin-top: 4px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Scholarix Trust Auditor</h1>
+  <p>Independently verifies researcher profiles against the live ORCID API and surfaces trust issues in the provided data.</p>
+</header>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="search">
+      <input id="search" type="text" placeholder="Search authors..." oninput="filterAuthors()">
+    </div>
+    <div id="author-list"></div>
+  </aside>
+
+  <main id="main">
+    <div class="placeholder">
+      <p>Select an author from the left to see their trust audit.</p>
+      <p id="summary-loading">Loading overview...</p>
+    </div>
+  </main>
+</div>
+
+<script>
+let AUTHORS = {{ authors | tojson }};
+let currentFolder = null;
+
+function renderAuthorList(filter = "") {
+  const list = document.getElementById("author-list");
+  const f = filter.toLowerCase();
+  list.innerHTML = AUTHORS
+    .filter(a => a.name.toLowerCase().includes(f) || (a.affiliation || "").toLowerCase().includes(f))
+    .map(a => `
+      <div class="author-item ${a.folder === currentFolder ? "active" : ""}" onclick="selectAuthor('${a.folder}')">
+        <div class="name">${a.name}</div>
+        <div class="affil">${a.affiliation || ""}</div>
+      </div>
+    `).join("");
+}
+
+function filterAuthors() {
+  renderAuthorList(document.getElementById("search").value);
+}
+
+async function loadSummary() {
+  const r = await fetch("/api/summary");
+  const s = await r.json();
+  document.getElementById("main").innerHTML = `
+    <h2>Overview</h2>
+    <div class="summary-strip">
+      <div class="stat"><div class="num">${s.total_authors}</div><div class="label">Total authors</div></div>
+      <div class="stat"><div class="num">${s.authors_with_no_orcid}</div><div class="label">No ORCID at all</div></div>
+      <div class="stat"><div class="num">${s.authors_with_conflicts}</div><div class="label">Live ORCID conflicts</div></div>
+      <div class="stat"><div class="num">${s.authors_with_file_live_mismatch}</div><div class="label">File ORCID != Live ORCID</div></div>
+    </div>
+    <div class="card">
+      <h3>Trust distribution</h3>
+      <div class="kv">
+        <dt>OK (no issues)</dt><dd><span class="badge badge-ok">${s.trust_distribution.OK}</span></dd>
+        <dt>Medium (1-2 issues)</dt><dd><span class="badge badge-medium">${s.trust_distribution.MEDIUM}</span></dd>
+        <dt>Low (3+ issues)</dt><dd><span class="badge badge-low">${s.trust_distribution.LOW}</span></dd>
+      </div>
+    </div>
+    <p style="color:#666;font-size:13px;margin-top:16px">Select an author on the left to see their full audit.</p>
+  `;
+}
+
+async function selectAuthor(folder) {
+  currentFolder = folder;
+  renderAuthorList(document.getElementById("search").value);
+  const r = await fetch("/api/audit/" + folder);
+  const a = await r.json();
+  renderAudit(a);
+}
+
+function statusPill(s) {
+  return `<span class="status status-${s}">${s}</span>`;
+}
+
+function renderAudit(a) {
+  const banner = `
+    <div class="trust-banner ${a.trust.toLowerCase()}">
+      <h2>${a.author.name} <span class="badge badge-${a.trust.toLowerCase()}">${a.trust}</span></h2>
+      ${a.problems.length ? "<strong>Issues detected:</strong><ul>" + a.problems.map(p => "<li>" + p + "</li>").join("") + "</ul>" : "<div>No trust issues detected across the four checks.</div>"}
+    </div>
+  `;
+
+  const identity = `
+    <div class="card">
+      <h3>Profile identity</h3>
+      <dl class="kv">
+        <dt>Stated affiliation</dt><dd>${a.author.affiliation || "<em>none</em>"}</dd>
+        <dt>ORCID ID</dt><dd>${a.author.orcid_id ? `<code>${a.author.orcid_id}</code>` : "<em>none</em>"}</dd>
+        <dt>OpenAlex ID</dt><dd><code>${a.author.openalex_id || ""}</code></dd>
+        <dt>Stated publications</dt><dd>${a.author.metrics.publications || "?"}</dd>
+        <dt>H-index</dt><dd>${a.author.metrics.h_index || "?"}</dd>
+        <dt>Total citations</dt><dd>${a.author.metrics.citations || "?"}</dd>
+      </dl>
+    </div>
+  `;
+
+  const affRow = a.affiliation;
+  const liveRow = a.affiliation_live;
+  const affiliation = `
+    <div class="card">
+      <h3>Affiliation check (file-only)</h3>
+      <dl class="kv">
+        <dt>Status</dt><dd>${statusPill(affRow.status)}</dd>
+        <dt>Stated</dt><dd>${affRow.stated_affiliation || "<em>none</em>"}</dd>
+        <dt>ORCID in file</dt><dd>${affRow.orcid_institutions || "<em>none</em>"}</dd>
+        <dt>Best match</dt><dd>${affRow.best_match || "<em>none</em>"} (score ${affRow.match_score})</dd>
+      </dl>
+      <div class="reason">${affRow.reason}</div>
+    </div>
+
+    <div class="card">
+      <h3>Affiliation check (live ORCID API)</h3>
+      <dl class="kv">
+        <dt>Status</dt><dd>${statusPill(liveRow.status)}</dd>
+        <dt>Live ORCID institutions</dt><dd>${liveRow.live_orcid_institutions || "<em>none</em>"}</dd>
+        <dt>File vs live</dt><dd>${liveRow.file_vs_live_agree ? statusPill(liveRow.file_vs_live_agree) : "<em>n/a</em>"}</dd>
+        <dt>Best match</dt><dd>${liveRow.live_best_match || "<em>none</em>"} (score ${liveRow.live_match_score})</dd>
+      </dl>
+      <div class="reason">${liveRow.reason}</div>
+    </div>
+  `;
+
+  const verificationRows = a.verification.map(v => `
+    <tr>
+      <td>${v.field}</td>
+      <td>${statusPill(v.status)}</td>
+      <td>${v.detail}</td>
+    </tr>
+  `).join("");
+
+  const verification = `
+    <div class="card">
+      <h3>Verification channels</h3>
+      <table>
+        <thead><tr><th>Field</th><th>Status</th><th>Detail</th></tr></thead>
+        <tbody>${verificationRows}</tbody>
+      </table>
+    </div>
+  `;
+
+  const pc = a.pub_count;
+  const pubCount = `
+    <div class="card">
+      <h3>Publication list completeness</h3>
+      <dl class="kv">
+        <dt>Status</dt><dd>${statusPill(pc.status)}</dd>
+        <dt>Stated count</dt><dd>${pc.stated_publications}</dd>
+        <dt>Actually in file</dt><dd>${pc.actual_in_file}</dd>
+        <dt>Sum of yearly counts</dt><dd>${pc.sum_counts_by_year}</dd>
+        <dt>Gap</dt><dd>${pc.gap_stated_minus_actual}</dd>
+      </dl>
+    </div>
+  `;
+
+  document.getElementById("main").innerHTML = banner + identity + affiliation + verification + pubCount;
+}
+
+renderAuthorList();
+loadSummary();
+</script>
+
+</body>
+</html>
