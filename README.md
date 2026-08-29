@@ -1,5 +1,7 @@
 # Scholarix Trust Auditor
 
+**Repository:** https://github.com/kaushal07vyas/scholarix-trust-auditor
+
 A focused proof of concept for the Scholarix AI evaluation. Given a folder of researcher profiles with claimed verification metadata, this tool independently re-verifies against the live ORCID API and surfaces trust issues that the raw data hides.
 
 ## The problem
@@ -74,6 +76,13 @@ We deliberately scoped to one API rather than adding Crossref, OpenAlex, and Sem
 - Publication-level cross-checking is documented as future scope in the pitch
 
 ## Setup
+
+Clone the repository:
+
+```bash
+git clone https://github.com/kaushal07vyas/scholarix-trust-auditor.git
+cd scholarix-trust-auditor
+```
 
 Requires Python 3.10 or newer.
 
