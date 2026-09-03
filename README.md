@@ -162,8 +162,8 @@ The rubric emphasizes surfacing uncertainty over hiding it. Design decisions tha
 
 ## Team
 
-- **Kaushal Vyas** — Product & Research Operations (customer discovery, product brief, pitch)
-- **Dhruv** — Full Stack Developer (data pipeline, ORCID integration, trust audit logic, dashboard)
+- **Nupur Kalele** — Product & Research Operations (customer discovery, product brief, pitch)
+- **Kaushal Vyas** — Full Stack Developer (data pipeline, ORCID integration, trust audit logic, dashboard)
 
 ## AI/tool usage note
 
